@@ -1,6 +1,6 @@
 {
-  "name": "payload-plugin-oauth",
-  "version": "2.2.0",
+  "name": "payload-plugin-oauth-state",
+  "version": "2.3.0",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -52,13 +52,13 @@
     "payload": "^2",
     "react": "^18"
   },
-  "author": "Thomas Ghysels <info@thomasg.be>",
-  "homepage": "https://github.com/thgh/payload-plugin-oauth",
+  "author": "Dominik Kropp <kroppd8@gmail.com>",
+  "homepage": "https://github.com/ph342/payload-plugin-oauth",
   "bugs": {
-    "url": "https://github.com/thgh/payload-plugin-oauth/issues"
+    "url": "https://github.com/ph342/payload-plugin-oauth/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/thgh/payload-plugin-oauth"
+    "url": "https://github.com/ph342/payload-plugin-oauth"
   }
 }
