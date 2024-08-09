@@ -1,8 +1,8 @@
 import axios from 'axios'
 import express from 'express'
+import { spawn } from 'node:child_process'
 import { Server } from 'node:http'
 import { afterAll, beforeAll, expect, test } from 'vitest'
-import { spawn } from 'node:child_process'
 
 const oauth = getOAuthProvider()
 const app = getPayloadServer(oauth)
@@ -12,14 +12,14 @@ test('basic sign in', async () => {
   expect(app.url).toMatch(/http:\/\/localhost:\d+/)
 
   // Build authorize URL
-  const authorize =
-    oauth.url +
-    '/authorize?' +
-    new URLSearchParams({
-      redirect_uri: app.url + '/oauth2/callback',
-      response_type: 'code',
-      client_id: 'client_id',
-    }).toString()
+  const authorize = app.url + '/oauth2/authorize'
+  // +
+  // new URLSearchParams({
+  //   redirect_uri: app.url + '/oauth2/callback',
+  //   response_type: 'code',
+  //   client_id: 'client_id',
+  //   state: '2fda5',
+  // }).toString()
   const callbackResponse = await axios.get(authorize, {
     validateStatus: () => true,
     maxRedirects: 0,
@@ -28,8 +28,11 @@ test('basic sign in', async () => {
 
   // Authorize should redirect to callback URL with code
   expect(callback).toMatch(/http:\/\/localhost:\d+\/oauth2\/callback/)
-  const code = new URL(callback).searchParams.get('code')
+  const actualSearchParams = new URL(callback).searchParams
+  const code = actualSearchParams.get('code')
   expect(code).toBe('testCode')
+  const state = actualSearchParams.get('state')
+  expect(state).toBe('2fda5')
 
   // Exchange code for cookie, redirecting to /admin
   const done = await axios.get(callback, {
@@ -142,7 +145,9 @@ function getOAuthProvider() {
           return res
             .status(400)
             .json({ error: 'invalid_redirect_uri', query: req.query })
-        const to = req.query.redirect_uri + '?code=testCode'
+
+        let to = req.query.redirect_uri + '?code=testCode'
+        if (req.query.state) to = `${to}&state=${req.query.state}`
         // console.log('authorize.redirect', to)
         res.redirect(to)
       })

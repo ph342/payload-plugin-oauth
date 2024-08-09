@@ -22,9 +22,11 @@ module.exports = buildConfig({
   plugins: [
     oAuthPlugin({
       authorizationURL: process.env.AUTHORIZATION_URL,
+      callbackURL: process.env.SERVERURL + "/oauth2/callback",
       tokenURL: process.env.TOKEN_URL,
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
+      state: true,
       userinfo: async (accessToken) =>
         fetch(process.env.USERINFO_URL, {
           headers: { Authorization: `Bearer ${accessToken}` },
