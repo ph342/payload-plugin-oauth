@@ -1,6 +1,5 @@
 import { type SessionOptions } from 'express-session'
 import type { StrategyOptions } from 'passport-oauth2'
-import type { ComponentType } from 'react'
 
 export interface oAuthPluginOptions extends StrategyOptions {
   /** Database connection URI in case the lib needs access to database */
@@ -71,6 +70,11 @@ export interface oAuthPluginOptions extends StrategyOptions {
    * @default /admin
    */
   successRedirect?: string
+
+  /** Path or URL to redirect the user to in case of failure
+   * @default /
+   */
+  failureRedirect?: string
 
   /**
    * Boolean to allow updating users on login

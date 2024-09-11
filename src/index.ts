@@ -1,24 +1,25 @@
 import { str62 } from '@bothrs/util/random'
 import MongoStore from 'connect-mongo'
+import debug from 'debug'
 import session from 'express-session'
 import jwt from 'jsonwebtoken'
 import passport from 'passport'
 import OAuth2Strategy, { VerifyCallback } from 'passport-oauth2'
-import debug from 'debug'
 import payload from 'payload'
 import { Config } from 'payload/config'
+import { PaginatedDocs } from 'payload/dist/database/types'
 import {
   Field,
   fieldAffectsData,
   fieldHasSubFields,
 } from 'payload/dist/fields/config/types'
-import { PaginatedDocs } from 'payload/dist/database/types'
 import getCookieExpiration from 'payload/dist/utilities/getCookieExpiration'
 import { TextField } from 'payload/types'
 
+import { NextFunction, Request, Response } from 'express'
+import { createElement } from 'react'
 import OAuthButton from './OAuthButton'
 import type { oAuthPluginOptions } from './types'
-import { createElement } from 'react'
 
 export { OAuthButton, oAuthPluginOptions }
 
@@ -116,6 +117,18 @@ function oAuthPluginClient(
         },
       }
     : incoming
+}
+
+function checkReturnTo(req: Request, res: Response, next: NextFunction) {
+  var returnTo = req.query['returnTo']
+  if (returnTo && typeof returnTo === 'string') {
+    // Sanity check
+    req.session = req.session || {}
+
+    // Set returnTo to the path you want to be redirect to after the authentication succeeds.
+    ;(req.session as any).returnTo = decodeURIComponent(returnTo)
+  }
+  next()
 }
 
 function oAuthPluginServer(
@@ -275,7 +288,15 @@ function oAuthPluginServer(
         path: authorizePath,
         method: 'get',
         root: true,
-        handler: passport.authenticate(strategyName),
+        handler: checkReturnTo,
+      },
+      {
+        path: authorizePath,
+        method: 'get',
+        root: true,
+        handler: passport.authenticate(strategyName, {
+          keepSessionInfo: true,
+        }),
       },
       {
         path: callbackPath,
@@ -287,7 +308,10 @@ function oAuthPluginServer(
         path: callbackPath,
         method: 'get',
         root: true,
-        handler: passport.authenticate(strategyName, { failureRedirect: '/' }),
+        handler: passport.authenticate(strategyName, {
+          failureRedirect: options.failureRedirect || '/',
+          keepSessionInfo: true,
+        }),
       },
       {
         path: callbackPath,
@@ -296,6 +320,8 @@ function oAuthPluginServer(
         async handler(req, res) {
           // Get the Mongoose user
           const collectionConfig = payload.collections[collectionSlug].config
+
+          const returnTo: string | undefined = (<any>req.session).returnTo
 
           // Sanitize the user object
           // let user = userDoc.toJSON({ virtuals: true })
@@ -345,7 +371,7 @@ function oAuthPluginServer(
           })
 
           // Redirect to the defined path or default to the admin dashboard
-          res.redirect(options.successRedirect || '/admin')
+          res.redirect(returnTo || options.successRedirect || '/admin')
         },
       },
     ]),
