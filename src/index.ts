@@ -121,7 +121,7 @@ function oAuthPluginClient(
 
 function checkReturnTo(req: Request, res: Response, next: NextFunction) {
   var returnTo = req.query['returnTo']
-  if (returnTo && typeof returnTo === 'string') {
+  if (returnTo && typeof returnTo === 'string' && returnTo.startsWith('/')) {
     // Sanity check
     req.session = req.session || {}
 
@@ -322,6 +322,7 @@ function oAuthPluginServer(
           const collectionConfig = payload.collections[collectionSlug].config
 
           const returnTo: string | undefined = (<any>req.session).returnTo
+          req.session.destroy(() => {})
 
           // Sanitize the user object
           // let user = userDoc.toJSON({ virtuals: true })
